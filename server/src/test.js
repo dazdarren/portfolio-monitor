@@ -5,10 +5,26 @@ const sequelize = require('./config/database');
 const authRoutes = require('./routes/auth');
 const accountRoutes = require('./routes/accounts');
 
+// Debug logging
+console.log('Environment Variables:', {
+  PORT: process.env.PORT,
+  DB_NAME: process.env.DB_NAME,
+  DB_USER: process.env.DB_USER,
+  DB_PASSWORD: process.env.DB_PASSWORD ? '****' : undefined,
+  DB_HOST: process.env.DB_HOST,
+  DB_PORT: process.env.DB_PORT,
+  JWT_SECRET: process.env.JWT_SECRET ? '****' : undefined
+});
+
 const app = express();
 
+// CORS configuration
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 
 // Routes
@@ -22,11 +38,19 @@ app.get('/api/test', (req, res) => {
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    code: err.code,
+    parent: err.parent ? {
+      message: err.parent.message,
+      code: err.parent.code
+    } : null
+  });
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Test database connection and start server
 async function startServer() {
@@ -45,6 +69,14 @@ async function startServer() {
     });
   } catch (error) {
     console.error('Unable to start server:', error);
+    if (error.parent) {
+      console.error('Database error details:', {
+        message: error.parent.message,
+        code: error.parent.code,
+        detail: error.parent.detail,
+        hint: error.parent.hint
+      });
+    }
   }
 }
 

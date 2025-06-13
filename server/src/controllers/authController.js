@@ -5,11 +5,16 @@ const { User } = require('../models');
 // Register a new user
 exports.register = async (req, res) => {
   try {
+    console.log('Registration request received:', {
+      body: { ...req.body, password: '****' }
+    });
+
     const { email, password, firstName, lastName } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
+      console.log('User already exists:', email);
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -19,6 +24,13 @@ exports.register = async (req, res) => {
       password,
       firstName,
       lastName
+    });
+
+    console.log('User created successfully:', {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName
     });
 
     // Generate JWT token
@@ -39,8 +51,15 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Error registering user' });
+    console.error('Registration error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ 
+      message: 'Error registering user',
+      error: error.message 
+    });
   }
 };
 
